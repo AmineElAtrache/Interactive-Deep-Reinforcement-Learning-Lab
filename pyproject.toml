@@ -19,9 +19,3 @@ dependencies = [
     "imageio",
     "pillow",
 ]
-
-[tool.uv.scripts]
-lab = "streamlit run app.py"
-metrics = "tensorboard --logdir=logs"
-train = "python train_models.py"
-load = "python load_model.py"

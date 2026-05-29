@@ -30,7 +30,7 @@ uv sync
 ## Launch the Lab
 
 ```bash
-uv run lab
+uv run streamlit run app.py
 ```
 
 Open **http://localhost:8501** in your browser.
@@ -46,13 +46,13 @@ Original command-line scripts are still available:
 
 ```bash
 # Batch-train all three algorithms
-uv run train 25
+uv run python train_models.py 25
 
 # View TensorBoard metrics
-uv run metrics
+uv run tensorboard --logdir=logs
 
 # Load and render a saved model
-uv run load PPO 50000.zip
+uv run python load_model.py PPO 50000.zip
 ```
 
 ## Project Structure
