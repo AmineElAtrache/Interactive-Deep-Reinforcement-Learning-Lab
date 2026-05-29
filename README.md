@@ -12,34 +12,29 @@ Repository: [github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-L
 
 **LunarLander-v3** — trained PPO agent landing successfully:
 
-![LunarLander PPO agent demo](docs/demo-lunarlander.gif)
+![LunarLander PPO agent demo](./docs/demo-lunarlander.gif)
 
 ## Screenshots
 
-<table>
-  <tr>
-    <td align="center"><b>🎮 Train</b><br/>Live progress & reward curves</td>
-    <td align="center"><b>⚖️ Compare</b><br/>DQN vs PPO vs A2C</td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshot-train.png" alt="Training tab with live metrics" width="100%"/></td>
-    <td><img src="docs/screenshot-compare.png" alt="Algorithm comparison mode" width="100%"/></td>
-  </tr>
-  <tr>
-    <td align="center"><b>🧪 Evaluate</b><br/>Multi-episode testing</td>
-    <td align="center"><b>🎬 Watch Agent</b><br/>Real-time rendering</td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshot-evaluate.png" alt="Evaluation mode results" width="100%"/></td>
-    <td><img src="docs/screenshot-watch.png" alt="Agent visualization" width="100%"/></td>
-  </tr>
-  <tr>
-    <td align="center" colspan="2"><b>📈 Dashboard</b> — Training analytics & convergence stats</td>
-  </tr>
-  <tr>
-    <td colspan="2"><img src="docs/screenshot-dashboard.png" alt="Performance analytics dashboard" width="100%"/></td>
-  </tr>
-</table>
+### 🎮 Train — live progress & reward curves
+
+![Training tab with live metrics](./docs/screenshot-train.png)
+
+### ⚖️ Compare — DQN vs PPO vs A2C
+
+![Algorithm comparison mode](./docs/screenshot-compare.png)
+
+### 🧪 Evaluate — multi-episode testing
+
+![Evaluation mode results](./docs/screenshot-evaluate.png)
+
+### 🎬 Watch Agent — real-time rendering
+
+![Agent visualization](./docs/screenshot-watch.png)
+
+### 📈 Dashboard — training analytics
+
+![Performance analytics dashboard](./docs/screenshot-dashboard.png)
 
 ## Features
 
