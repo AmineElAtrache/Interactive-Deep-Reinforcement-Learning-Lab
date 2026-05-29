@@ -23,10 +23,10 @@ An interactive, visual, multi-algorithm reinforcement learning lab built on **St
 
 ## CI/CD
 
-[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
-[![CD](https://github.com/OWNER/REPO/actions/workflows/cd.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/cd.yml)
+[![CI](https://github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-Lab/actions/workflows/ci.yml/badge.svg)](https://github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-Lab/actions/workflows/ci.yml)
+[![CD](https://github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-Lab/actions/workflows/cd.yml/badge.svg)](https://github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-Lab/actions/workflows/cd.yml)
 
-> Replace `OWNER/REPO` in the badge URLs with your GitHub username and repository name after pushing.
+Repository: [github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-Lab](https://github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-Lab)
 
 ### Continuous Integration (CI)
 
@@ -49,14 +49,14 @@ uv run pytest tests/ -v
 
 Runs on push to `main` / `master` and version tags (`v*`):
 
-1. **Docker** — builds and pushes the app image to [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry) (`ghcr.io/<owner>/<repo>`)
+1. **Docker** — builds and pushes the app image to [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry) (`ghcr.io/amineelatrache/interactive-deep-reinforcement-learning-lab`)
 2. **Verify** — confirms the Streamlit app loads after deploy
 
 Pull and run the published image:
 
 ```bash
-docker pull ghcr.io/OWNER/REPO:latest
-docker run -p 8501:8501 ghcr.io/OWNER/REPO:latest
+docker pull ghcr.io/amineelatrache/interactive-deep-reinforcement-learning-lab:latest
+docker run -p 8501:8501 ghcr.io/amineelatrache/interactive-deep-reinforcement-learning-lab:latest
 ```
 
 ### Streamlit Community Cloud (optional)
