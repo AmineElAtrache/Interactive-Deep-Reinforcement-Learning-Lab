@@ -7,7 +7,7 @@ EXPORTS_DIR = os.path.join(BASE_DIR, "exports")
 
 ENVIRONMENTS = {
     "CartPole-v1": {"id": "CartPole-v1", "success_threshold": 475},
-    "LunarLander-v2": {"id": "LunarLander-v2", "success_threshold": 200},
+    "LunarLander-v3": {"id": "LunarLander-v3", "success_threshold": 200},
 }
 
 ALGORITHMS = ["DQN", "PPO", "A2C"]

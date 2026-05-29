@@ -12,7 +12,7 @@ from config import ALGORITHMS, CHART_COLORS, DEFAULT_HYPERPARAMS, ENVIRONMENTS, 
 from core.comparison import ComparisonSession
 from core.env_utils import make_env
 from core.evaluator import evaluate_saved_model
-from core.models import list_saved_models, load_model
+from core.models import EnvironmentMismatchError, get_model_metadata, list_saved_models, load_model
 from core.trainer import TrainingSession
 from core.visualization import export_episode, run_agent_episode
 
@@ -417,14 +417,27 @@ with tab_eval:
         st.warning(f"No saved {eval_algo} models found. Train and save a model first.")
     else:
         eval_model_file = st.selectbox("Model file", available)
+        eval_meta = get_model_metadata(eval_algo, eval_model_file)
+        eval_trained_env = eval_meta.get("env_id", "unknown")
+        st.caption(f"Model trained on: **{eval_trained_env}**")
+        if eval_trained_env != env_id and not str(eval_trained_env).startswith("unknown"):
+            st.warning(
+                f"This model was trained on **{eval_trained_env}**, but the sidebar "
+                f"environment is **{env_id}**. Switch environments or pick another model."
+            )
+
         n_eval_episodes = st.slider("Evaluation Episodes", 1, 50, 10)
 
         if st.button("🧪 Run Evaluation", type="primary"):
             with st.spinner("Evaluating agent..."):
-                eval_result = evaluate_saved_model(
-                    eval_algo, eval_model_file, env_id, n_eval_episodes
-                )
-                st.session_state.last_eval_result = eval_result
+                try:
+                    eval_result = evaluate_saved_model(
+                        eval_algo, eval_model_file, env_id, n_eval_episodes
+                    )
+                    st.session_state.last_eval_result = eval_result
+                except EnvironmentMismatchError as exc:
+                    st.error(str(exc))
+                    st.session_state.last_eval_result = None
 
         if st.session_state.last_eval_result:
             er = st.session_state.last_eval_result
@@ -447,6 +460,15 @@ with tab_watch:
         st.warning("No saved models available. Train and save a model first.")
     else:
         watch_file = st.selectbox("Model", watch_models, key="watch_file")
+        watch_meta = get_model_metadata(watch_algo, watch_file)
+        watch_trained_env = watch_meta.get("env_id", "unknown")
+        st.caption(f"Model trained on: **{watch_trained_env}**")
+        if watch_trained_env != env_id and not str(watch_trained_env).startswith("unknown"):
+            st.warning(
+                f"This model was trained on **{watch_trained_env}**, but the sidebar "
+                f"environment is **{env_id}**. Switch environments or pick another model."
+            )
+
         export_fmt = st.radio("Export format", ["gif", "mp4"], horizontal=True)
 
         w1, w2 = st.columns(2)
@@ -456,30 +478,35 @@ with tab_watch:
             export_watch = st.button("💾 Save Episode Video")
 
         if run_watch or export_watch:
-            env = make_env(env_id)
-            model = load_model(watch_algo, watch_file, env=env)
-            frames, reward, steps = run_agent_episode(model, env_id)
-            env.close()
+            try:
+                env = make_env(env_id)
+                model = load_model(watch_algo, watch_file, env=env)
+                frames, reward, steps = run_agent_episode(model, env_id)
+                env.close()
 
-            st.success(f"Episode finished — Reward: **{reward:.1f}**, Steps: **{steps}**")
+                st.success(f"Episode finished — Reward: **{reward:.1f}**, Steps: **{steps}**")
 
-            if frames:
-                frame_slot = st.empty()
-                for i, frame in enumerate(frames):
-                    frame_slot.image(frame, caption=f"Step {i + 1}/{len(frames)}", width="stretch")
-                    time.sleep(0.03)
+                if frames:
+                    frame_slot = st.empty()
+                    for i, frame in enumerate(frames):
+                        frame_slot.image(
+                            frame, caption=f"Step {i + 1}/{len(frames)}", width="stretch"
+                        )
+                        time.sleep(0.03)
 
-            if export_watch and frames:
-                path, _, _, _ = export_episode(
-                    model, env_id, export_fmt, label=f"{watch_algo}_{env_id}"
-                )
-                st.download_button(
-                    label=f"⬇️ Download {export_fmt.upper()}",
-                    data=open(path, "rb").read(),
-                    file_name=Path(path).name,
-                    mime="video/mp4" if export_fmt == "mp4" else "image/gif",
-                )
-                st.caption(f"Saved to `{path}`")
+                if export_watch and frames:
+                    path, _, _, _ = export_episode(
+                        model, env_id, export_fmt, label=f"{watch_algo}_{env_id}"
+                    )
+                    st.download_button(
+                        label=f"⬇️ Download {export_fmt.upper()}",
+                        data=open(path, "rb").read(),
+                        file_name=Path(path).name,
+                        mime="video/mp4" if export_fmt == "mp4" else "image/gif",
+                    )
+                    st.caption(f"Saved to `{path}`")
+            except EnvironmentMismatchError as exc:
+                st.error(str(exc))
 
 with tab_dashboard:
     st.subheader("📈 Performance Analytics Dashboard")

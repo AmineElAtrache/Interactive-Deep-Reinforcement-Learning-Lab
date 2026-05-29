@@ -139,7 +139,12 @@ class TrainingSession:
     def save_current_model(self, label: Optional[str] = None) -> Optional[str]:
         if self._model is None or self.metrics["algorithm"] is None:
             return None
-        saved = save_model(self._model, self.metrics["algorithm"], label)
+        saved = save_model(
+            self._model,
+            self.metrics["algorithm"],
+            label,
+            env_id=self.metrics.get("environment"),
+        )
         with self._lock:
             self.metrics["saved_model"] = saved
         return saved

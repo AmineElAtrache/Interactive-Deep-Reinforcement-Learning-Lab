@@ -148,7 +148,7 @@ class ComparisonSession:
                     self.result.elapsed_seconds[algo] = time.time() - start
                     if save_models and not self._stop_event.is_set():
                         self.result.saved_models[algo] = save_model(
-                            model, algo, f"compare_{env_id}_{algo}"
+                            model, algo, f"compare_{env_id}_{algo}", env_id=env_id
                         )
                     env.close()
 

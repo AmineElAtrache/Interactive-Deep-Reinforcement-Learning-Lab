@@ -85,7 +85,7 @@ Open **http://localhost:8501** in your browser.
 ## Environments
 
 - **CartPole-v1** — balance a pole on a cart (default, fast to train)
-- **LunarLander-v2** — land a spacecraft (requires `box2d`, slower)
+- **LunarLander-v3** — land a spacecraft (requires `box2d`, slower)
 
 ## CLI (Legacy)
 
