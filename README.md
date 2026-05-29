@@ -18,23 +18,23 @@ Repository: [github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-L
 
 ### 🎮 Train — live progress & reward curves
 
-![Training tab with live metrics](./docs/screenshot-train.png)
+![Training tab with live metrics](./docs/screenshot-train.jpg)
 
 ### ⚖️ Compare — DQN vs PPO vs A2C
 
-![Algorithm comparison mode](./docs/screenshot-compare.png)
+![Algorithm comparison mode](./docs/screenshot-compare.jpg)
 
 ### 🧪 Evaluate — multi-episode testing
 
-![Evaluation mode results](./docs/screenshot-evaluate.png)
+![Evaluation mode results](./docs/screenshot-evaluate.jpg)
 
 ### 🎬 Watch Agent — real-time rendering
 
-![Agent visualization](./docs/screenshot-watch.png)
+![Agent visualization](./docs/screenshot-watch.jpg)
 
 ### 📈 Dashboard — training analytics
 
-![Performance analytics dashboard](./docs/screenshot-dashboard.png)
+![Performance analytics dashboard](./docs/screenshot-dashboard.jpg)
 
 ## Features
 

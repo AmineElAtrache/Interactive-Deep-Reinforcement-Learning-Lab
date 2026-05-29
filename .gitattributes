@@ -1,2 +1,13 @@
-# Auto detect text files and perform LF normalization
+# Binary assets — must come before text=auto
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.zip binary
+*.mp4 binary
+*.whl binary
+
+# Text files
 * text=auto
