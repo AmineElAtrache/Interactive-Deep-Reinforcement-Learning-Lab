@@ -2,6 +2,45 @@
 
 An interactive, visual, multi-algorithm reinforcement learning lab built on **Stable Baselines 3**. Train, compare, evaluate, and watch DQN, PPO, and A2C agents on classic control environments — all from a demo-ready web UI.
 
+[![CI](https://github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-Lab/actions/workflows/ci.yml/badge.svg)](https://github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-Lab/actions/workflows/ci.yml)
+[![CD](https://github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-Lab/actions/workflows/cd.yml/badge.svg)](https://github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-Lab/actions/workflows/cd.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+Repository: [github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-Lab](https://github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-Lab)
+
+## Demo
+
+**LunarLander-v3** — trained PPO agent landing successfully:
+
+![LunarLander PPO agent demo](docs/demo-lunarlander.gif)
+
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><b>🎮 Train</b><br/>Live progress & reward curves</td>
+    <td align="center"><b>⚖️ Compare</b><br/>DQN vs PPO vs A2C</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshot-train.png" alt="Training tab with live metrics" width="100%"/></td>
+    <td><img src="docs/screenshot-compare.png" alt="Algorithm comparison mode" width="100%"/></td>
+  </tr>
+  <tr>
+    <td align="center"><b>🧪 Evaluate</b><br/>Multi-episode testing</td>
+    <td align="center"><b>🎬 Watch Agent</b><br/>Real-time rendering</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshot-evaluate.png" alt="Evaluation mode results" width="100%"/></td>
+    <td><img src="docs/screenshot-watch.png" alt="Agent visualization" width="100%"/></td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2"><b>📈 Dashboard</b> — Training analytics & convergence stats</td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="docs/screenshot-dashboard.png" alt="Performance analytics dashboard" width="100%"/></td>
+  </tr>
+</table>
+
 ## Features
 
 | Feature | Description |
@@ -21,12 +60,27 @@ An interactive, visual, multi-algorithm reinforcement learning lab built on **St
 - Python 3.8+
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) package manager
 
+## Quick Start
+
+```bash
+git clone https://github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-Lab.git
+cd Interactive-Deep-Reinforcement-Learning-Lab
+uv sync
+uv run streamlit run app.py
+```
+
+Open **http://localhost:8501** in your browser.
+
+## Environments
+
+| Environment | Description | Tip |
+|-------------|-------------|-----|
+| **CartPole-v1** | Balance a pole on a cart | Fast to train — good for demos |
+| **LunarLander-v3** | Land a spacecraft safely | Slower — use 50k+ timesteps |
+
+> Models are environment-specific. A CartPole model cannot run on LunarLander (and vice versa).
+
 ## CI/CD
-
-[![CI](https://github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-Lab/actions/workflows/ci.yml/badge.svg)](https://github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-Lab/actions/workflows/ci.yml)
-[![CD](https://github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-Lab/actions/workflows/cd.yml/badge.svg)](https://github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-Lab/actions/workflows/cd.yml)
-
-Repository: [github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-Lab](https://github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-Lab)
 
 ### Continuous Integration (CI)
 
@@ -49,10 +103,8 @@ uv run pytest tests/ -v
 
 Runs on push to `main` / `master` and version tags (`v*`):
 
-1. **Docker** — builds and pushes the app image to [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry) (`ghcr.io/amineelatrache/interactive-deep-reinforcement-learning-lab`)
+1. **Docker** — builds and pushes to [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
 2. **Verify** — confirms the Streamlit app loads after deploy
-
-Pull and run the published image:
 
 ```bash
 docker pull ghcr.io/amineelatrache/interactive-deep-reinforcement-learning-lab:latest
@@ -61,45 +113,16 @@ docker run -p 8501:8501 ghcr.io/amineelatrache/interactive-deep-reinforcement-le
 
 ### Streamlit Community Cloud (optional)
 
-You can also deploy for free without Docker:
-
 1. Push this repo to GitHub
 2. Go to [share.streamlit.io](https://share.streamlit.io)
 3. Connect the repo — main file: `app.py`
-4. Python version: 3.12 — install command: `uv sync` or use the Docker image above
-
-## Setup
-
-```bash
-uv sync
-```
-
-## Launch the Lab
-
-```bash
-uv run streamlit run app.py
-```
-
-Open **http://localhost:8501** in your browser.
-
-## Environments
-
-- **CartPole-v1** — balance a pole on a cart (default, fast to train)
-- **LunarLander-v3** — land a spacecraft (requires `box2d`, slower)
 
 ## CLI (Legacy)
 
-Original command-line scripts are still available:
-
 ```bash
-# Batch-train all three algorithms
-uv run python train_models.py 25
-
-# View TensorBoard metrics
-uv run tensorboard --logdir=logs
-
-# Load and render a saved model
-uv run python load_model.py PPO 50000.zip
+uv run python train_models.py 25          # Batch-train all algorithms
+uv run tensorboard --logdir=logs          # TensorBoard metrics
+uv run python load_model.py PPO 50000.zip # Render a saved model
 ```
 
 ## Project Structure
@@ -107,27 +130,24 @@ uv run python load_model.py PPO 50000.zip
 ```
 ├── app.py              # Streamlit interactive lab UI
 ├── config.py           # Paths, environments, defaults
-├── pyproject.toml      # Project metadata & dependencies (uv)
+├── docs/               # README screenshots & demo GIF
+├── pyproject.toml      # Dependencies (uv)
 ├── Dockerfile          # Container image for CD
 ├── .github/workflows/  # CI & CD pipelines
-├── tests/              # Smoke tests for CI
-├── core/
-│   ├── callbacks.py    # Live training metrics callback
-│   ├── trainer.py      # Training session (pause/stop)
-│   ├── comparison.py   # Multi-algorithm comparison
-│   ├── evaluator.py    # Evaluation mode
-│   ├── visualization.py# Agent rendering & video export
-│   └── models.py       # Model create/load/save
-├── train_models.py     # Legacy batch training
-├── load_model.py       # Legacy model viewer
+├── tests/              # Smoke tests
+├── core/               # Training, comparison, evaluation, visualization
 ├── models/             # Saved model checkpoints
 ├── logs/               # TensorBoard logs
 └── exports/            # Exported GIF/MP4 episodes
 ```
 
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
 ## Resources
 
 1. [Stable Baselines 3 Documentation](https://stable-baselines3.readthedocs.io/)
-2. [OpenAI Gym Environments](https://gym.openai.com/envs/)
+2. [Gymnasium Environments](https://gymnasium.farama.org/)
 3. [Streamlit Documentation](https://docs.streamlit.io/)
 4. [uv Documentation](https://docs.astral.sh/uv/)
