@@ -1,0 +1,27 @@
+[project]
+name = "interactive-drl-research-lab"
+version = "1.0.0"
+description = "Interactive Deep Reinforcement Learning Research Lab with DQN, PPO, and A2C"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "torch",
+    "torchvision",
+    "torchaudio",
+    "stable-baselines3[extra]",
+    "gym",
+    "box2d",
+    "pyglet",
+    "streamlit",
+    "plotly",
+    "pandas",
+    "numpy",
+    "imageio",
+    "pillow",
+]
+
+[tool.uv.scripts]
+lab = "streamlit run app.py"
+metrics = "tensorboard --logdir=logs"
+train = "python train_models.py"
+load = "python load_model.py"
