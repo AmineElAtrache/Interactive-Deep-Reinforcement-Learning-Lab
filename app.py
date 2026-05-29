@@ -1,6 +1,7 @@
 """Interactive Deep Reinforcement Learning Research Lab — Streamlit UI."""
 
 import time
+from datetime import timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -9,8 +10,9 @@ import streamlit as st
 
 from config import ALGORITHMS, CHART_COLORS, DEFAULT_HYPERPARAMS, ENVIRONMENTS, ensure_dirs
 from core.comparison import ComparisonSession
+from core.env_utils import make_env
 from core.evaluator import evaluate_saved_model
-from core.models import list_saved_models, load_model, make_env
+from core.models import list_saved_models, load_model
 from core.trainer import TrainingSession
 from core.visualization import export_episode, run_agent_episode
 
@@ -141,6 +143,68 @@ def plot_comparison_rewards(result):
     return fig
 
 
+def render_training_progress(metrics, is_running: bool):
+    """Live training panel — updates every 0.5s while training."""
+    status = metrics.get("status", "idle")
+    current = metrics.get("current_timestep", 0)
+    total = metrics.get("total_timesteps", 1) or 1
+    elapsed = metrics.get("elapsed_seconds", 0.0)
+    rewards = metrics.get("episode_rewards", [])
+
+    status_colors = {
+        "idle": "⚪",
+        "training": "🟢",
+        "paused": "🟡",
+        "completed": "✅",
+        "stopped": "🟠",
+        "error": "🔴",
+    }
+    st.info(f"{status_colors.get(status, '⚪')} Status: **{status.upper()}**")
+
+    if metrics.get("error"):
+        st.error(metrics["error"])
+
+    pct = min(current / total, 1.0)
+    st.progress(
+        pct,
+        text=(
+            f"{'Training' if is_running else 'Progress'}: "
+            f"{current:,} / {total:,} timesteps ({pct * 100:.1f}%)"
+        ),
+    )
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Episodes", len(rewards))
+    c2.metric("Latest Reward", f"{rewards[-1]:.1f}" if rewards else "—")
+    c3.metric("Best Reward", f"{max(rewards):.1f}" if rewards else "—")
+    c4.metric("Elapsed (s)", f"{elapsed:.0f}")
+
+    if is_running and not rewards:
+        st.caption(
+            "Collecting first rollout — watch the timestep counter and progress bar update live."
+        )
+    recent = metrics.get("recent_rewards", [])
+    if recent:
+        st.caption(f"Recent episode rewards: {', '.join(f'{r:.1f}' for r in recent)}")
+
+    algorithm = metrics.get("algorithm", "PPO")
+    chart_col1, chart_col2 = st.columns(2)
+    with chart_col1:
+        st.plotly_chart(
+            plot_reward_curve(metrics, color=CHART_COLORS.get(algorithm, "#3498db")),
+            width="stretch",
+        )
+    with chart_col2:
+        if algorithm == "DQN" and metrics.get("epsilon"):
+            st.plotly_chart(plot_epsilon_curve(metrics), width="stretch")
+        elif metrics.get("loss"):
+            st.plotly_chart(plot_loss_curve(metrics), width="stretch")
+        elif is_running:
+            st.caption("Loss / epsilon charts appear after the first gradient updates.")
+        else:
+            st.caption("Loss / epsilon data not recorded for this run.")
+
+
 def analytics_from_metrics(metrics, success_threshold):
     rewards = metrics.get("episode_rewards", [])
     if not rewards:
@@ -203,7 +267,9 @@ with st.sidebar:
         value=DEFAULT_HYPERPARAMS["learning_rate"],
         format="%.5f",
     )
-    gamma = st.slider("Gamma (γ)", min_value=0.90, max_value=0.999, value=DEFAULT_HYPERPARAMS["gamma"], step=0.001)
+    gamma = st.slider(
+        "Gamma (γ)", min_value=0.90, max_value=0.999, value=DEFAULT_HYPERPARAMS["gamma"], step=0.001
+    )
 
 with tab_train:
     st.subheader("🎮 Interactive Training System")
@@ -216,11 +282,11 @@ with tab_train:
         st.write("")
         btn1, btn2, btn3 = st.columns(3)
         with btn1:
-            start_train = st.button("▶️ Train", type="primary", use_container_width=True)
+            start_train = st.button("▶️ Train", type="primary", width="stretch")
         with btn2:
-            pause_train = st.button("⏸️ Pause", use_container_width=True)
+            pause_train = st.button("⏸️ Pause", width="stretch")
         with btn3:
-            stop_train = st.button("⏹️ Stop", use_container_width=True)
+            stop_train = st.button("⏹️ Stop", width="stretch")
 
     if start_train and not session.is_running:
         session.start(
@@ -238,44 +304,19 @@ with tab_train:
     if stop_train:
         session.stop()
 
-    metrics = session.get_snapshot()
-    status = metrics.get("status", "idle")
+    @st.fragment(run_every=timedelta(milliseconds=500))
+    def live_training_panel():
+        metrics = session.get_snapshot()
+        show = (
+            session.is_running
+            or metrics.get("status") in ("training", "paused")
+            or metrics.get("episode_rewards")
+            or metrics.get("current_timestep", 0) > 0
+        )
+        if show:
+            render_training_progress(metrics, session.is_running)
 
-    status_colors = {
-        "idle": "⚪",
-        "training": "🟢",
-        "paused": "🟡",
-        "completed": "✅",
-        "stopped": "🟠",
-        "error": "🔴",
-    }
-    st.info(f"{status_colors.get(status, '⚪')} Status: **{status.upper()}**")
-
-    if session.is_running or metrics.get("episode_rewards"):
-        rewards = metrics.get("episode_rewards", [])
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Episodes", len(rewards))
-        m2.metric("Latest Reward", f"{rewards[-1]:.1f}" if rewards else "—")
-        m3.metric("Best Reward", f"{max(rewards):.1f}" if rewards else "—")
-        m4.metric("Timesteps", metrics.get("timesteps", [0])[-1] if metrics.get("timesteps") else 0)
-
-        chart_col1, chart_col2 = st.columns(2)
-        with chart_col1:
-            st.plotly_chart(
-                plot_reward_curve(metrics, color=CHART_COLORS.get(algorithm, "#3498db")),
-                use_container_width=True,
-            )
-        with chart_col2:
-            if algorithm == "DQN" and metrics.get("epsilon"):
-                st.plotly_chart(plot_epsilon_curve(metrics), use_container_width=True)
-            elif metrics.get("loss"):
-                st.plotly_chart(plot_loss_curve(metrics), use_container_width=True)
-            else:
-                st.caption("Loss / epsilon data will appear during training.")
-
-        if session.is_running:
-            time.sleep(0.5)
-            st.rerun()
+    live_training_panel()
 
     st.divider()
     st.subheader("💾 Save Model")
@@ -284,7 +325,7 @@ with tab_train:
         save_label = st.text_input("Model name (optional)", key="save_label")
     with save_col2:
         st.write("")
-        if st.button("💾 Save Trained Model", use_container_width=True):
+        if st.button("💾 Save Trained Model", width="stretch"):
             saved = session.save_current_model(save_label or None)
             if saved:
                 st.success(f"Model saved: `models/{algorithm}/{saved}`")
@@ -326,34 +367,44 @@ with tab_compare:
     if cmp_stop:
         cmp_session.stop()
 
-    result = cmp_session.get_result()
-    if result.current_algorithm:
-        st.info(f"Currently training: **{result.current_algorithm}**")
+    @st.fragment(run_every=timedelta(milliseconds=500))
+    def live_comparison_panel():
+        result = cmp_session.get_result()
+        if result.current_algorithm:
+            st.info(f"Currently training: **{result.current_algorithm}**")
 
-    if result.metrics:
-        st.plotly_chart(plot_comparison_rewards(result), use_container_width=True)
+        if result.metrics:
+            for algo, m in result.metrics.items():
+                if cmp_session.is_running and algo == result.current_algorithm:
+                    current = m.get("current_timestep", 0)
+                    total = result.total_timesteps or 1
+                    st.progress(
+                        min(current / total, 1.0),
+                        text=f"{algo}: {current:,} / {total:,} timesteps",
+                    )
 
-        table_data = result.summary_table()
-        if table_data:
-            st.subheader("Comparison Results")
-            st.dataframe(pd.DataFrame(table_data), use_container_width=True, hide_index=True)
+            st.plotly_chart(plot_comparison_rewards(result), width="stretch")
 
-            best_avg = result.best_average_algorithm()
-            fastest = result.fastest_algorithm()
-            if best_avg or fastest:
-                r1, r2 = st.columns(2)
-                r1.metric("Best Average Reward", best_avg or "—")
-                r2.metric("Fastest Training", fastest or "—")
+            table_data = result.summary_table()
+            if table_data:
+                st.subheader("Comparison Results")
+                st.dataframe(pd.DataFrame(table_data), width="stretch", hide_index=True)
 
-        if result.saved_models:
-            st.caption(
-                "Saved comparison models: "
-                + ", ".join(f"{k}: {v}" for k, v in result.saved_models.items())
-            )
+                best_avg = result.best_average_algorithm()
+                fastest = result.fastest_algorithm()
+                if best_avg or fastest:
+                    r1, r2 = st.columns(2)
+                    r1.metric("Best Average Reward", best_avg or "—")
+                    r2.metric("Fastest Training", fastest or "—")
 
-    if cmp_session.is_running:
-        time.sleep(0.5)
-        st.rerun()
+            if result.saved_models:
+                st.caption(
+                    "Saved comparison models: "
+                    + ", ".join(f"{k}: {v}" for k, v in result.saved_models.items())
+                )
+
+    if cmp_session.is_running or cmp_session.get_result().metrics:
+        live_comparison_panel()
 
 with tab_eval:
     st.subheader("🧪 Evaluation Mode")
@@ -415,7 +466,7 @@ with tab_watch:
             if frames:
                 frame_slot = st.empty()
                 for i, frame in enumerate(frames):
-                    frame_slot.image(frame, caption=f"Step {i + 1}/{len(frames)}", use_container_width=True)
+                    frame_slot.image(frame, caption=f"Step {i + 1}/{len(frames)}", width="stretch")
                     time.sleep(0.03)
 
             if export_watch and frames:
@@ -456,7 +507,7 @@ with tab_dashboard:
                     title="Training Progress",
                     color=CHART_COLORS.get(dash_metrics.get("algorithm", "PPO"), "#3498db"),
                 ),
-                use_container_width=True,
+                width="stretch",
             )
         else:
             st.info("Start training to see analytics here.")
@@ -464,8 +515,8 @@ with tab_dashboard:
         cmp_result = st.session_state.comparison_session.get_result()
         if cmp_result.metrics:
             rows = cmp_result.summary_table()
-            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
-            st.plotly_chart(plot_comparison_rewards(cmp_result), use_container_width=True)
+            st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
+            st.plotly_chart(plot_comparison_rewards(cmp_result), width="stretch")
 
             speeds = cmp_result.elapsed_seconds
             if speeds:
@@ -479,6 +530,6 @@ with tab_dashboard:
                     ]
                 )
                 speed_fig.update_layout(title="Training Speed (seconds)", height=300)
-                st.plotly_chart(speed_fig, use_container_width=True)
+                st.plotly_chart(speed_fig, width="stretch")
         else:
             st.info("Run a comparison to see analytics here.")

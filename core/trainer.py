@@ -3,7 +3,8 @@ import time
 from typing import Callable, Optional
 
 from core.callbacks import LiveMetricsCallback
-from core.models import create_model, make_env, save_model
+from core.env_utils import make_env
+from core.models import create_model, save_model
 
 
 def empty_metrics() -> dict:
@@ -11,9 +12,12 @@ def empty_metrics() -> dict:
         "episode_rewards": [],
         "moving_avg_rewards": [],
         "episodes": [],
+        "recent_rewards": [],
         "loss": [],
         "epsilon": [],
         "timesteps": [],
+        "current_timestep": 0,
+        "total_timesteps": 0,
         "status": "idle",
         "error": None,
         "saved_model": None,
@@ -43,11 +47,12 @@ class TrainingSession:
     def model(self):
         return self._model
 
-    def reset_metrics(self, algorithm: str, environment: str):
+    def reset_metrics(self, algorithm: str, environment: str, total_timesteps: int):
         with self._lock:
             self.metrics = empty_metrics()
             self.metrics["algorithm"] = algorithm
             self.metrics["environment"] = environment
+            self.metrics["total_timesteps"] = total_timesteps
 
     def start(
         self,
@@ -56,7 +61,7 @@ class TrainingSession:
         total_timesteps: int,
         learning_rate: float,
         gamma: float,
-        chunk_size: int = 2048,
+        chunk_size: int = 512,
         on_complete: Optional[Callable] = None,
     ):
         if self.is_running:
@@ -64,22 +69,24 @@ class TrainingSession:
 
         self._stop_event.clear()
         self._pause_event.clear()
-        self.reset_metrics(algorithm, env_id)
+        self.reset_metrics(algorithm, env_id, total_timesteps)
 
         def _train():
             start_time = time.time()
             try:
                 self._env = make_env(env_id)
                 run_name = f"{algorithm}_{env_id}"
-                self._model = create_model(
-                    algorithm, self._env, learning_rate, gamma, run_name
-                )
+                self._model = create_model(algorithm, self._env, learning_rate, gamma, run_name)
                 callback = LiveMetricsCallback(
-                    self.metrics, self._stop_event, self._pause_event
+                    self.metrics,
+                    self._stop_event,
+                    self._pause_event,
+                    self._lock,
                 )
 
                 remaining = total_timesteps
-                self.metrics["status"] = "training"
+                with self._lock:
+                    self.metrics["status"] = "training"
 
                 while remaining > 0 and not self._stop_event.is_set():
                     step = min(chunk_size, remaining)
@@ -90,15 +97,19 @@ class TrainingSession:
                         tb_log_name=run_name,
                     )
                     remaining -= step
+                    with self._lock:
+                        self.metrics["elapsed_seconds"] = time.time() - start_time
 
-                self.metrics["elapsed_seconds"] = time.time() - start_time
-                if self._stop_event.is_set():
-                    self.metrics["status"] = "stopped"
-                else:
-                    self.metrics["status"] = "completed"
+                with self._lock:
+                    self.metrics["elapsed_seconds"] = time.time() - start_time
+                    if self._stop_event.is_set():
+                        self.metrics["status"] = "stopped"
+                    else:
+                        self.metrics["status"] = "completed"
             except Exception as exc:
-                self.metrics["error"] = str(exc)
-                self.metrics["status"] = "error"
+                with self._lock:
+                    self.metrics["error"] = str(exc)
+                    self.metrics["status"] = "error"
             finally:
                 if self._env is not None:
                     self._env.close()
@@ -111,13 +122,15 @@ class TrainingSession:
 
     def pause(self):
         self._pause_event.set()
-        if self.metrics["status"] == "training":
-            self.metrics["status"] = "paused"
+        with self._lock:
+            if self.metrics["status"] == "training":
+                self.metrics["status"] = "paused"
 
     def resume(self):
         self._pause_event.clear()
-        if self.metrics["status"] == "paused":
-            self.metrics["status"] = "training"
+        with self._lock:
+            if self.metrics["status"] == "paused":
+                self.metrics["status"] = "training"
 
     def stop(self):
         self._stop_event.set()
@@ -127,9 +140,13 @@ class TrainingSession:
         if self._model is None or self.metrics["algorithm"] is None:
             return None
         saved = save_model(self._model, self.metrics["algorithm"], label)
-        self.metrics["saved_model"] = saved
+        with self._lock:
+            self.metrics["saved_model"] = saved
         return saved
 
     def get_snapshot(self) -> dict:
         with self._lock:
-            return {key: (list(val) if isinstance(val, list) else val) for key, val in self.metrics.items()}
+            return {
+                key: (list(val) if isinstance(val, list) else val)
+                for key, val in self.metrics.items()
+            }

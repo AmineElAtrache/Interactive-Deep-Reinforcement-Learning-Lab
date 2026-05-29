@@ -21,6 +21,53 @@ An interactive, visual, multi-algorithm reinforcement learning lab built on **St
 - Python 3.8+
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) package manager
 
+## CI/CD
+
+[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
+[![CD](https://github.com/OWNER/REPO/actions/workflows/cd.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/cd.yml)
+
+> Replace `OWNER/REPO` in the badge URLs with your GitHub username and repository name after pushing.
+
+### Continuous Integration (CI)
+
+Runs on every push and pull request to `main` / `master`:
+
+- **Ruff** lint and format check
+- **Compile** all Python modules
+- **Pytest** smoke tests (env reset, model creation — no full training)
+
+Run locally:
+
+```bash
+uv sync --group dev
+uv run ruff check .
+uv run ruff format --check .
+uv run pytest tests/ -v
+```
+
+### Continuous Deployment (CD)
+
+Runs on push to `main` / `master` and version tags (`v*`):
+
+1. **Docker** — builds and pushes the app image to [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry) (`ghcr.io/<owner>/<repo>`)
+2. **Verify** — confirms the Streamlit app loads after deploy
+
+Pull and run the published image:
+
+```bash
+docker pull ghcr.io/OWNER/REPO:latest
+docker run -p 8501:8501 ghcr.io/OWNER/REPO:latest
+```
+
+### Streamlit Community Cloud (optional)
+
+You can also deploy for free without Docker:
+
+1. Push this repo to GitHub
+2. Go to [share.streamlit.io](https://share.streamlit.io)
+3. Connect the repo — main file: `app.py`
+4. Python version: 3.12 — install command: `uv sync` or use the Docker image above
+
 ## Setup
 
 ```bash
@@ -61,6 +108,9 @@ uv run python load_model.py PPO 50000.zip
 ├── app.py              # Streamlit interactive lab UI
 ├── config.py           # Paths, environments, defaults
 ├── pyproject.toml      # Project metadata & dependencies (uv)
+├── Dockerfile          # Container image for CD
+├── .github/workflows/  # CI & CD pipelines
+├── tests/              # Smoke tests for CI
 ├── core/
 │   ├── callbacks.py    # Live training metrics callback
 │   ├── trainer.py      # Training session (pause/stop)

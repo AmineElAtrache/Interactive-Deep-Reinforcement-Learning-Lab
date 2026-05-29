@@ -2,16 +2,11 @@ import os
 from datetime import datetime
 from typing import Optional
 
-import gym
 from stable_baselines3 import A2C, DQN, PPO
 
 from config import LOGS_DIR, MODELS_DIR
 
 ALGO_CLASSES = {"PPO": PPO, "A2C": A2C, "DQN": DQN}
-
-
-def make_env(env_id: str):
-    return gym.make(env_id)
 
 
 def create_model(algorithm: str, env, learning_rate: float, gamma: float, run_name: str):
@@ -57,7 +52,5 @@ def list_saved_models(algorithm: Optional[str] = None) -> dict:
         if not os.path.isdir(folder):
             result[algo] = []
             continue
-        result[algo] = sorted(
-            f for f in os.listdir(folder) if f.endswith(".zip")
-        )
+        result[algo] = sorted(f for f in os.listdir(folder) if f.endswith(".zip"))
     return result

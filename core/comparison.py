@@ -6,9 +6,9 @@ from typing import Dict, List, Optional
 
 import numpy as np
 
-from config import ALGORITHMS
-from core.models import create_model, make_env, save_model
 from core.callbacks import LiveMetricsCallback
+from core.env_utils import make_env
+from core.models import create_model, save_model
 
 
 @dataclass
@@ -74,9 +74,11 @@ def empty_algo_metrics() -> dict:
         "episode_rewards": [],
         "moving_avg_rewards": [],
         "episodes": [],
+        "recent_rewards": [],
         "loss": [],
         "epsilon": [],
         "timesteps": [],
+        "current_timestep": 0,
     }
 
 
@@ -86,6 +88,7 @@ class ComparisonSession:
         self._stop_event = threading.Event()
         self._pause_event = threading.Event()
         self._thread: Optional[threading.Thread] = None
+        self._lock = threading.Lock()
 
     @property
     def is_running(self) -> bool:
@@ -98,7 +101,7 @@ class ComparisonSession:
         total_timesteps: int,
         learning_rate: float,
         gamma: float,
-        chunk_size: int = 2048,
+        chunk_size: int = 512,
         save_models: bool = True,
     ):
         if self.is_running:
@@ -127,6 +130,7 @@ class ComparisonSession:
                         self.result.metrics[algo],
                         self._stop_event,
                         self._pause_event,
+                        self._lock,
                     )
 
                     start = time.time()

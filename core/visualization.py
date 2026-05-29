@@ -2,17 +2,10 @@ import os
 from datetime import datetime
 from typing import List, Optional, Tuple
 
-import gym
 import numpy as np
 
 from config import EXPORTS_DIR
-
-
-def _make_render_env(env_id: str):
-    try:
-        return gym.make(env_id, render_mode="rgb_array")
-    except TypeError:
-        return gym.make(env_id)
+from core.env_utils import make_env, reset_env, step_env
 
 
 def run_agent_episode(
@@ -20,24 +13,21 @@ def run_agent_episode(
     env_id: str,
     max_steps: int = 1000,
 ) -> Tuple[List[np.ndarray], float, int]:
-    env = _make_render_env(env_id)
+    env = make_env(env_id, render_mode="rgb_array")
     frames: List[np.ndarray] = []
-    obs = env.reset()
+    obs = reset_env(env)
     done = False
     total_reward = 0.0
     steps = 0
 
     while not done and steps < max_steps:
-        try:
-            frame = env.render(mode="rgb_array")
-        except TypeError:
-            frame = env.render()
+        frame = env.render()
         if frame is not None:
             frames.append(np.array(frame))
 
         action, _ = model.predict(obs, deterministic=True)
-        obs, reward, done, info = env.step(action)
-        total_reward += float(reward)
+        obs, reward, done, _info = step_env(env, action)
+        total_reward += reward
         steps += 1
 
     env.close()

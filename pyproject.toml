@@ -9,8 +9,7 @@ dependencies = [
     "torchvision",
     "torchaudio",
     "stable-baselines3[extra]",
-    "gym",
-    "box2d",
+    "gymnasium[box2d]",
     "pyglet",
     "streamlit",
     "plotly",
@@ -19,3 +18,22 @@ dependencies = [
     "imageio",
     "pillow",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.8",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+exclude = [".venv", "uv.lock"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

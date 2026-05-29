@@ -1,9 +1,10 @@
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List
 
 import numpy as np
 
-from core.models import load_model, make_env
+from core.env_utils import make_env, reset_env, step_env
+from core.models import load_model
 
 
 @dataclass
@@ -40,14 +41,14 @@ def evaluate_model(
     env = make_env(env_id)
     result = EvaluationResult()
     for _ in range(n_episodes):
-        obs = env.reset()
+        obs = reset_env(env)
         done = False
         total_reward = 0.0
         steps = 0
         while not done:
             action, _ = model.predict(obs, deterministic=True)
-            obs, reward, done, info = env.step(action)
-            total_reward += float(reward)
+            obs, reward, done, _info = step_env(env, action)
+            total_reward += reward
             steps += 1
         result.episode_rewards.append(total_reward)
         result.episode_lengths.append(steps)
