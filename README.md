@@ -12,29 +12,29 @@ Repository: [github.com/AmineElAtrache/Interactive-Deep-Reinforcement-Learning-L
 
 **LunarLander-v3** — trained PPO agent landing successfully:
 
-![LunarLander PPO agent demo](./docs/demo-lunarlander.gif)
+![LunarLander PPO agent demo](docs/demo-lunarlander.gif)
 
 ## Screenshots
 
 ### 🎮 Train — live progress & reward curves
 
-![Training tab with live metrics](./docs/screenshot-train.jpg)
+![Training tab with live metrics](docs/screenshot-train.png)
 
 ### ⚖️ Compare — DQN vs PPO vs A2C
 
-![Algorithm comparison mode](./docs/screenshot-compare.jpg)
+![Algorithm comparison mode](docs/screenshot-compare.png)
 
 ### 🧪 Evaluate — multi-episode testing
 
-![Evaluation mode results](./docs/screenshot-evaluate.jpg)
+![Evaluation mode results](docs/screenshot-evaluate.png)
 
 ### 🎬 Watch Agent — real-time rendering
 
-![Agent visualization](./docs/screenshot-watch.jpg)
+![Agent visualization](docs/screenshot-watch.png)
 
 ### 📈 Dashboard — training analytics
 
-![Performance analytics dashboard](./docs/screenshot-dashboard.jpg)
+![Performance analytics dashboard](docs/screenshot-dashboard.png)
 
 ## Features
 
